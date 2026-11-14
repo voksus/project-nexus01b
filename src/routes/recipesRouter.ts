@@ -8,8 +8,6 @@ import {
 } from "../controllers/favoritesController.ts";
 import * as recipesController from "../controllers/recipesController.ts";
 import { authenticate } from "../middlewares/authenticate.ts";
-
-import { authStub } from "../middlewares/authStub.ts";
 import { imageUpload } from "../middlewares/imageUpload.ts";
 import { optionalAuthenticate } from "../middlewares/optionalAuthenticate.ts";
 import { removeTempUpload } from "../middlewares/removeTempUpload.ts";
@@ -69,7 +67,7 @@ recipesRouter.get(
 
 recipesRouter.post(
   "/",
-  authStub,
+  authenticate,
   requireMultipart,
   imageUpload.single("thumb"),
   removeTempUpload,
@@ -81,7 +79,7 @@ recipesRouter.post(
 
 recipesRouter.delete(
   "/:id",
-  authStub,
+  authenticate,
   validateRequest({ params: RecipeIdParamsSchema }),
   requireRecipeOwner,
   ctrlWrapper(recipesController.deleteRecipe),
