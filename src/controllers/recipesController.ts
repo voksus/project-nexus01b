@@ -3,7 +3,11 @@ import type {
   PopularRecipesQuery,
   RecipesQuery,
 } from "../schemas/recipesSchemas.ts";
-import { listPopularRecipes, listRecipes, getRecipeByIdService } from "../services/recipesService.ts";
+import {
+  getRecipeByIdService,
+  listPopularRecipes,
+  listRecipes,
+} from "../services/recipesService.ts";
 
 export async function getRecipes(req: Request, res: Response) {
   const query = req.query as unknown as RecipesQuery;

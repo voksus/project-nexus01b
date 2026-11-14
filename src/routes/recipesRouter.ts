@@ -6,12 +6,12 @@ import {
   getFavorites,
   removeFavorite,
 } from "../controllers/favoritesController.ts";
+import { getOwnRecipes } from "../controllers/ownRecipeController.ts";
 import {
   getPopularRecipes,
-  getRecipes,
   getRecipeById,
+  getRecipes,
 } from "../controllers/recipesController.ts";
-import { getOwnRecipes } from "../controllers/ownRecipeController.ts";
 import { authenticate } from "../middlewares/authenticate.ts";
 import { optionalAuthenticate } from "../middlewares/optionalAuthenticate.ts";
 import { validateRequest } from "../middlewares/validateRequest.ts";
@@ -20,13 +20,12 @@ import {
   FavoritesQuerySchema,
 } from "../schemas/favoritesSchemas.ts";
 import {
-  PopularRecipesQuerySchema,
-  RecipesQuerySchema,
   OwnRecipesQuerySchema,
+  PopularRecipesQuerySchema,
   RecipeIdParamsSchema,
+  RecipesQuerySchema,
 } from "../schemas/recipesSchemas.ts";
 import { ctrlWrapper } from "../utils/ctrlWrapper.ts";
-import { getRecipeByIdService } from "../services/recipesService.ts";
 
 const recipesRouter = Router();
 
@@ -59,10 +58,11 @@ recipesRouter.get(
 );
 
 recipesRouter.get(
-  "/own", 
-  authenticate, 
+  "/own",
+  authenticate,
   validateRequest({ query: OwnRecipesQuerySchema }),
-  ctrlWrapper(getOwnRecipes));
+  ctrlWrapper(getOwnRecipes),
+);
 
 recipesRouter.get(
   "/",

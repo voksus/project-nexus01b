@@ -2,11 +2,11 @@ import { Prisma } from "../../generated/prisma/client.ts";
 import { prisma } from "../db.ts";
 import { createHttpError } from "../errors/HttpError.ts";
 import type { FavoritesQuery } from "../schemas/favoritesSchemas.ts";
-import type { 
-  RecipeCard, 
-  RecipesQuery, 
-  OwnRecipesQuery, 
-  RecipeDetails 
+import type {
+  OwnRecipesQuery,
+  RecipeCard,
+  RecipeDetails,
+  RecipesQuery,
 } from "../schemas/recipesSchemas.ts";
 import {
   formatPaginatedResponse,
