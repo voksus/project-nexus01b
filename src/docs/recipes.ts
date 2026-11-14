@@ -8,11 +8,7 @@ import {
 } from "../schemas/recipesSchemas.ts";
 import { errorResponses } from "./errorResponses.ts";
 
-const optionalSecurity: Record<string, string[]>[] = [
-  { bearerAuth: [] },
-  { cookieAuth: [] },
-  {},
-];
+import { optionalSecurity } from "./security.ts";
 
 registry.registerPath({
   method: "get",
