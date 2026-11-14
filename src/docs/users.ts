@@ -1,21 +1,15 @@
-import { z } from "zod";
-import { PaginationQuerySchema, registry } from "../openapi.ts";
+import { registry } from "../openapi.ts";
 import {
   AvatarResponseSchema,
   CurrentUserResponseSchema,
   PaginatedUserCardsSchema,
   UserByIdResponseSchema,
+  UserIdParamsSchema,
+  UsersPaginationQuerySchema,
 } from "../schemas/usersSchemas.ts";
+import { z } from "../utils/zod.ts";
 import { errorResponses } from "./errorResponses.ts";
-
-const authSecurity: Record<string, string[]>[] = [
-  { bearerAuth: [] },
-  { cookieAuth: [] },
-];
-
-const UserIdParamsSchema = z.object({
-  id: z.string().min(1).openapi({ example: "clx1234567890abcdef" }),
-});
+import { authenticatedSecurity } from "./security.ts";
 
 registry.registerPath({
   method: "get",
@@ -24,7 +18,7 @@ registry.registerPath({
   summary: "Get current user profile",
   description:
     "Returns full profile details for the currently authenticated user, including email, avatar URL, and counts of created recipes, favorite recipes, followers, and following users.",
-  security: authSecurity,
+  security: authenticatedSecurity,
   responses: {
     200: {
       description: "Authenticated user profile details.",
@@ -41,8 +35,8 @@ registry.registerPath({
   summary: "Get users followed by the current user",
   description:
     "Returns a paginated list of users that the currently authenticated user is following, including their recipe counts and preview thumbnails.",
-  security: authSecurity,
-  request: { query: PaginationQuerySchema },
+  security: authenticatedSecurity,
+  request: { query: UsersPaginationQuerySchema },
   responses: {
     200: {
       description: "A paginated list of followed user cards.",
@@ -59,7 +53,7 @@ registry.registerPath({
   summary: "Update current user avatar",
   description:
     "Uploads a new avatar image file (multipart/form-data under the 'avatar' field) to Cloudinary, updates the user profile, and returns the new avatar URL.",
-  security: authSecurity,
+  security: authenticatedSecurity,
   request: {
     body: {
       content: {
@@ -91,7 +85,7 @@ registry.registerPath({
   summary: "Get public user profile by ID",
   description:
     "Returns public profile information for a specific user by ID, including name, email, avatar URL, and counts of added recipes and followers.",
-  security: authSecurity,
+  security: authenticatedSecurity,
   request: { params: UserIdParamsSchema },
   responses: {
     200: {
@@ -109,10 +103,10 @@ registry.registerPath({
   summary: "Get followers of a user",
   description:
     "Returns a paginated list of users who follow the user specified by ID, including their recipe counts and preview thumbnails.",
-  security: authSecurity,
+  security: authenticatedSecurity,
   request: {
     params: UserIdParamsSchema,
-    query: PaginationQuerySchema,
+    query: UsersPaginationQuerySchema,
   },
   responses: {
     200: {
@@ -130,7 +124,7 @@ registry.registerPath({
   summary: "Follow a user",
   description:
     "Subscribes the currently authenticated user to the target user specified by ID. Users cannot follow themselves.",
-  security: authSecurity,
+  security: authenticatedSecurity,
   request: { params: UserIdParamsSchema },
   responses: {
     200: {
@@ -138,9 +132,7 @@ registry.registerPath({
       content: {
         "application/json": {
           schema: z.object({
-            message: z
-              .string()
-              .openapi({ example: "Successfully followed user" }),
+            message: z.string().openapi({ example: "Successfully followed" }),
           }),
         },
       },
@@ -156,7 +148,7 @@ registry.registerPath({
   summary: "Unfollow a user",
   description:
     "Removes the subscription of the currently authenticated user from the target user specified by ID.",
-  security: authSecurity,
+  security: authenticatedSecurity,
   request: { params: UserIdParamsSchema },
   responses: {
     200: {
@@ -164,9 +156,7 @@ registry.registerPath({
       content: {
         "application/json": {
           schema: z.object({
-            message: z
-              .string()
-              .openapi({ example: "Successfully unfollowed user" }),
+            message: z.string().openapi({ example: "Successfully unfollowed" }),
           }),
         },
       },

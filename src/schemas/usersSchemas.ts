@@ -1,5 +1,15 @@
-import { z } from "zod";
-import { registry } from "../openapi.ts";
+import { createPaginatedSchema, registry } from "../openapi.ts";
+import { z } from "../utils/zod.ts";
+import { createPositiveIntegerQuerySchema, IdSchema } from "./commonSchemas.ts";
+
+export const UserIdParamsSchema = z.object({
+  id: IdSchema.openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
+});
+
+export const UsersPaginationQuerySchema = z.object({
+  page: createPositiveIntegerQuerySchema(1).openapi({ example: 1 }),
+  limit: createPositiveIntegerQuerySchema(5, 100).openapi({ example: 5 }),
+});
 
 export const UserRecipePreviewSchema = registry.register(
   "UserRecipePreview",
@@ -15,7 +25,7 @@ export const UserRecipePreviewSchema = registry.register(
 export const UserCardSchema = registry.register(
   "UserCard",
   z.object({
-    id: z.string().openapi({ example: "clx1234567890abcdef" }),
+    id: z.string().openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
     name: z.string().openapi({ example: "Olena Kovalenko" }),
     avatar: z.string().nullable().openapi({
       example: "https://res.cloudinary.com/demo/image/upload/avatar.jpg",
@@ -26,23 +36,17 @@ export const UserCardSchema = registry.register(
   }),
 );
 
-export const PaginatedUserCardsSchema = registry.register(
+export const PaginatedUserCardsSchema = createPaginatedSchema(
+  UserCardSchema,
   "PaginatedUserCards",
-  z.object({
-    page: z.number().int().openapi({ example: 1 }),
-    limit: z.number().int().openapi({ example: 5 }),
-    total: z.number().int().openapi({ example: 25 }),
-    totalPages: z.number().int().openapi({ example: 5 }),
-    items: z.array(UserCardSchema),
-  }),
 );
 
 export const CurrentUserResponseSchema = registry.register(
   "CurrentUserResponse",
   z.object({
-    id: z.string().openapi({ example: "clx1234567890abcdef" }),
+    id: z.string().openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
     name: z.string().openapi({ example: "Olena Kovalenko" }),
-    email: z.string().email().openapi({ example: "olena@example.com" }),
+    email: z.email().openapi({ example: "olena@example.com" }),
     avatar: z.string().nullable().openapi({
       example: "https://res.cloudinary.com/demo/image/upload/avatar.jpg",
     }),
@@ -56,9 +60,9 @@ export const CurrentUserResponseSchema = registry.register(
 export const UserByIdResponseSchema = registry.register(
   "UserByIdResponse",
   z.object({
-    id: z.string().openapi({ example: "clx1234567890abcdef" }),
+    id: z.string().openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
     name: z.string().openapi({ example: "Olena Kovalenko" }),
-    email: z.string().email().openapi({ example: "olena@example.com" }),
+    email: z.email().openapi({ example: "olena@example.com" }),
     avatar: z.string().nullable().openapi({
       example: "https://res.cloudinary.com/demo/image/upload/avatar.jpg",
     }),

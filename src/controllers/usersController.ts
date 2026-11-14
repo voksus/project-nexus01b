@@ -1,10 +1,8 @@
-import fs from "node:fs/promises";
 import type { Request, Response } from "express";
-import { cloudinary } from "../config/cloudinary.ts";
-import { prisma } from "../db.ts";
 import { HttpError } from "../errors/HttpError.ts";
 import * as userService from "../services/usersService.ts";
 import { ctrlWrapper } from "../utils/ctrlWrapper.ts";
+import type { PaginationQuery } from "../utils/pagination.ts";
 
 // 1. GET /api/users/current
 const getCurrent = async (req: Request, res: Response) => {
@@ -43,23 +41,11 @@ const changeAvatar = async (req: Request, res: Response) => {
     throw new HttpError(400, "Avatar image file is required");
   }
 
-  const filePath = req.file.path;
-
-  try {
-    const uploadResult = await cloudinary.uploader.upload(filePath, {
-      folder: "avatars",
-      transformation: [{ width: 250, height: 250, crop: "fill" }],
-    });
-
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { avatar: uploadResult.secure_url },
-    });
-
-    res.json({ avatar: updatedUser.avatar });
-  } finally {
-    await fs.unlink(filePath).catch(() => null);
-  }
+  const result = await userService.updateUserAvatarService(
+    userId,
+    req.file.path,
+  );
+  res.json(result);
 };
 
 // 4. GET /api/users/following
@@ -69,10 +55,10 @@ const fetchFollowing = async (req: Request, res: Response) => {
     throw new HttpError(401, "Unauthorized");
   }
 
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 5;
-
-  const result = await userService.getFollowingService(userId, page, limit);
+  const result = await userService.getFollowingService(
+    userId,
+    req.query as PaginationQuery,
+  );
   res.json(result);
 };
 
@@ -84,14 +70,10 @@ const fetchFollowers = async (req: Request, res: Response) => {
   }
 
   const targetUserId = String(req.params.id);
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 5;
-
   const result = await userService.getFollowersService(
     targetUserId,
     currentUserId,
-    page,
-    limit,
+    req.query as PaginationQuery,
   );
   res.json(result);
 };

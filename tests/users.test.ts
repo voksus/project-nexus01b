@@ -164,12 +164,12 @@ test("unauthenticated requests to /api/users/* return 401", async () => {
 
 test("follow and unfollow flow updates counts, lists and prevents self-follow", async () => {
   await assert.rejects(
-    () => userService.followUserService(ids.alice, ids.alice),
-    { status: 400, message: "You cannot follow yourself" },
+    () => userService.getFollowersService(randomUUID(), ids.alice),
+    { status: 404, message: "User not found" },
   );
 
   await assert.rejects(
-    () => userService.followUserService(ids.alice, randomUUID()),
+    () => userService.unfollowUserService(ids.alice, randomUUID()),
     { status: 404, message: "User not found" },
   );
 
@@ -206,7 +206,11 @@ test("follow and unfollow flow updates counts, lists and prevents self-follow", 
     isFollowing: true,
   });
 
-  const followingList = await userService.getFollowingService(ids.alice, 1, 5);
+  const followingList = await userService.getFollowingService(ids.alice, {
+    page: 1,
+    limit: 5,
+  });
+
   assert.equal(followingList.total, 1);
   assert.equal(followingList.totalPages, 1);
   assert.equal(followingList.items.length, 1);
@@ -218,8 +222,7 @@ test("follow and unfollow flow updates counts, lists and prevents self-follow", 
   const followersList = await userService.getFollowersService(
     ids.bob,
     ids.alice,
-    1,
-    5,
+    { page: 1, limit: 5 },
   );
   assert.equal(followersList.total, 2);
   const charlieCard = followersList.items.find((u) => u.id === ids.charlie);

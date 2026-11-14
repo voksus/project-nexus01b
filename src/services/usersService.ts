@@ -1,5 +1,22 @@
 import { prisma } from "../db.ts";
 import { HttpError } from "../errors/HttpError.ts";
+import {
+  formatPaginatedResponse,
+  getPaginationParams,
+  type PaginationQuery,
+} from "../utils/pagination.ts";
+import { uploadImage } from "./cloudinaryService.ts";
+
+const ensureUserExists = async (userId: string): Promise<void> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new HttpError(404, "User not found");
+  }
+};
 
 export const getCurrentUserService = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -80,12 +97,28 @@ export const getUserByIdService = async (
   };
 };
 
+export const updateUserAvatarService = async (
+  userId: string,
+  filePath: string,
+) => {
+  const avatarUrl = await uploadImage(filePath, `avatars/${userId}`, {
+    overwrite: true,
+  });
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { avatar: avatarUrl },
+    select: { avatar: true },
+  });
+
+  return { avatar: updatedUser.avatar };
+};
+
 export const getFollowingService = async (
   userId: string,
-  page = 1,
-  limit = 5,
+  query: PaginationQuery = {},
 ) => {
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = getPaginationParams(query, 5);
 
   const [total, followingRecords] = await Promise.all([
     prisma.userFollow.count({ where: { followerId: userId } }),
@@ -120,22 +153,17 @@ export const getFollowingService = async (
     recipes: record.following.recipes,
   }));
 
-  return {
-    page,
-    limit,
-    total,
-    totalPages: Math.max(1, Math.ceil(total / limit)),
-    items,
-  };
+  return formatPaginatedResponse(items, total, page, limit);
 };
 
 export const getFollowersService = async (
   targetUserId: string,
   currentUserId: string,
-  page = 1,
-  limit = 5,
+  query: PaginationQuery = {},
 ) => {
-  const skip = (page - 1) * limit;
+  await ensureUserExists(targetUserId);
+
+  const { page, limit, skip } = getPaginationParams(query, 5);
 
   const [total, followerRecords] = await Promise.all([
     prisma.userFollow.count({ where: { followingId: targetUserId } }),
@@ -183,13 +211,7 @@ export const getFollowersService = async (
     recipes: record.follower.recipes,
   }));
 
-  return {
-    page,
-    limit,
-    total,
-    totalPages: Math.max(1, Math.ceil(total / limit)),
-    items,
-  };
+  return formatPaginatedResponse(items, total, page, limit);
 };
 
 export const followUserService = async (
@@ -200,12 +222,7 @@ export const followUserService = async (
     throw new HttpError(400, "You cannot follow yourself");
   }
 
-  const targetUser = await prisma.user.findUnique({
-    where: { id: targetUserId },
-  });
-  if (!targetUser) {
-    throw new HttpError(404, "User not found");
-  }
+  await ensureUserExists(targetUserId);
 
   await prisma.userFollow.upsert({
     where: {
@@ -228,6 +245,8 @@ export const unfollowUserService = async (
   currentUserId: string,
   targetUserId: string,
 ) => {
+  await ensureUserExists(targetUserId);
+
   await prisma.userFollow.deleteMany({
     where: {
       followerId: currentUserId,
