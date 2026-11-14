@@ -1,5 +1,7 @@
 import { Router } from "express";
 import authRouter from "./authRouter.ts";
+import recipesRouter from "./recipesRouter.ts";
+import testimonialsRouter from "./testimonialsRouter.ts";
 
 const apiRouter = Router();
 
@@ -7,9 +9,11 @@ const apiRouter = Router();
 // [BE-04] apiRouter.use('/categories', categoriesRouter);
 // [BE-04] apiRouter.use('/areas', areasRouter);
 // [BE-04] apiRouter.use('/ingredients', ingredientsRouter);
-// [BE-05] apiRouter.use('/testimonials', testimonialsRouter);
-// [BE-06] / [BE-07] / [BE-08] / [BE-09] apiRouter.use('/recipes', recipesRouter);
 // [BE-10] apiRouter.use('/users', usersRouter);
 apiRouter.use("/auth", authRouter);
+
+apiRouter.use("/recipes", recipesRouter);
+
+apiRouter.use("/testimonials", testimonialsRouter);
 
 export default apiRouter;
