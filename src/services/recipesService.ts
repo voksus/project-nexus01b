@@ -2,7 +2,12 @@ import { Prisma } from "../../generated/prisma/client.ts";
 import { prisma } from "../db.ts";
 import { createHttpError } from "../errors/HttpError.ts";
 import type { FavoritesQuery } from "../schemas/favoritesSchemas.ts";
-import type { RecipeCard, RecipesQuery } from "../schemas/recipesSchemas.ts";
+import type { 
+  RecipeCard, 
+  RecipesQuery, 
+  OwnRecipesQuery, 
+  RecipeDetails 
+} from "../schemas/recipesSchemas.ts";
 import {
   formatPaginatedResponse,
   getPaginationParams,
@@ -153,4 +158,87 @@ export async function addFavoriteRecipe(recipeId: string, userId: string) {
 
 export async function removeFavoriteRecipe(recipeId: string, userId: string) {
   await prisma.favorite.deleteMany({ where: { recipeId, userId } });
+}
+
+export async function listOwnRecipes(
+  query: OwnRecipesQuery,
+  authenticatedUserId: string,
+) {
+  const ownerId = query.userId ?? authenticatedUserId;
+  const { records, total, page, limit } = await getRecipePage(
+    { ownerId },
+    query,
+    9,
+  );
+  const items = await addFavorites(records, authenticatedUserId);
+  return formatPaginatedResponse(items, total, page, limit);
+}
+
+export async function getRecipeByIdService(
+  recipeId: string,
+  userId?: string,
+): Promise<RecipeDetails> {
+  const [recipe, favorite] = await Promise.all([
+    prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        instructions: true,
+        thumb: true,
+        time: true,
+        category: {
+          select: { id: true, name: true },
+        },
+        area: {
+          select: { id: true, name: true },
+        },
+        owner: {
+          select: { id: true, name: true, avatar: true },
+        },
+        ingredients: {
+          select: {
+            measure: true,
+            ingredient: {
+              select: {
+                id: true,
+                name: true,
+                img: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    userId
+      ? prisma.favorite.findFirst({
+          where: { userId, recipeId },
+          select: { recipeId: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  if (!recipe) {
+    throw createHttpError(404, "Recipe not found");
+  }
+
+  return {
+    id: recipe.id,
+    title: recipe.title,
+    description: recipe.description,
+    instructions: recipe.instructions,
+    thumb: recipe.thumb,
+    time: recipe.time,
+    category: recipe.category,
+    area: recipe.area,
+    owner: recipe.owner,
+    ingredients: recipe.ingredients.map(({ measure, ingredient }) => ({
+      id: ingredient.id,
+      name: ingredient.name,
+      img: ingredient.img,
+      measure,
+    })),
+    isFavorite: Boolean(favorite),
+  };
 }

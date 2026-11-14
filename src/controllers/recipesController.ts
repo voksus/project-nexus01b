@@ -3,7 +3,7 @@ import type {
   PopularRecipesQuery,
   RecipesQuery,
 } from "../schemas/recipesSchemas.ts";
-import { listPopularRecipes, listRecipes } from "../services/recipesService.ts";
+import { listPopularRecipes, listRecipes, getRecipeByIdService } from "../services/recipesService.ts";
 
 export async function getRecipes(req: Request, res: Response) {
   const query = req.query as unknown as RecipesQuery;
@@ -14,5 +14,10 @@ export async function getRecipes(req: Request, res: Response) {
 export async function getPopularRecipes(req: Request, res: Response) {
   const { limit } = req.query as unknown as PopularRecipesQuery;
   const result = await listPopularRecipes(limit, req.user?.id);
+  res.status(200).json(result);
+}
+
+export async function getRecipeById(req: Request, res: Response) {
+  const result = await getRecipeByIdService(req.params.id, req.user?.id);
   res.status(200).json(result);
 }
