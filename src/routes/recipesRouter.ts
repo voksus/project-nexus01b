@@ -7,13 +7,15 @@ import {
   removeFavorite,
 } from "../controllers/favoritesController.ts";
 import { getOwnRecipes } from "../controllers/ownRecipeController.ts";
-import {
-  getPopularRecipes,
-  getRecipeById,
-  getRecipes,
-} from "../controllers/recipesController.ts";
+import * as recipesController from "../controllers/recipesController.ts";
 import { authenticate } from "../middlewares/authenticate.ts";
+import { imageUpload } from "../middlewares/imageUpload.ts";
 import { optionalAuthenticate } from "../middlewares/optionalAuthenticate.ts";
+import { removeTempUpload } from "../middlewares/removeTempUpload.ts";
+import { requireMultipart } from "../middlewares/requireMultipart.ts";
+import { requireRecipeOwner } from "../middlewares/requireRecipeOwner.ts";
+import { validateImageContent } from "../middlewares/validateImageContent.ts";
+import { validateRecipeReferences } from "../middlewares/validateRecipeReferences.ts";
 import { validateRequest } from "../middlewares/validateRequest.ts";
 import {
   FavoriteRecipeParamsSchema,
@@ -21,6 +23,7 @@ import {
 } from "../schemas/favoritesSchemas.ts";
 import {
   OwnRecipesQuerySchema,
+  CreateRecipeSchema,
   PopularRecipesQuerySchema,
   RecipeIdParamsSchema,
   RecipesQuerySchema,
@@ -54,7 +57,7 @@ recipesRouter.get(
   "/popular",
   optionalAuthenticate,
   validateRequest({ query: PopularRecipesQuerySchema }),
-  ctrlWrapper(getPopularRecipes),
+  ctrlWrapper(recipesController.getPopularRecipes),
 );
 
 recipesRouter.get(
@@ -68,14 +71,34 @@ recipesRouter.get(
   "/",
   optionalAuthenticate,
   validateRequest({ query: RecipesQuerySchema }),
-  ctrlWrapper(getRecipes),
+  ctrlWrapper(recipesController.getRecipes),
+);
+
+recipesRouter.post(
+  "/",
+  authenticate,
+  requireMultipart,
+  imageUpload.single("thumb"),
+  removeTempUpload,
+  validateImageContent,
+  validateRequest({ body: CreateRecipeSchema }),
+  validateRecipeReferences,
+  ctrlWrapper(recipesController.createRecipe),
+);
+
+recipesRouter.delete(
+  "/:id",
+  authenticate,
+  validateRequest({ params: RecipeIdParamsSchema }),
+  requireRecipeOwner,
+  ctrlWrapper(recipesController.deleteRecipe),
 );
 
 recipesRouter.get(
   "/:id",
   optionalAuthenticate,
   validateRequest({ params: RecipeIdParamsSchema }),
-  ctrlWrapper(getRecipeById),
+  ctrlWrapper(recipesController.getRecipeById),
 );
 
 export default recipesRouter;
