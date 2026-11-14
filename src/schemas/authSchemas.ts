@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { registry } from "../openapi.ts";
+import { z } from "../utils/zod.ts";
 
 const BCRYPT_MAX_BYTES = 72;
 
