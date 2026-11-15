@@ -6,19 +6,24 @@ import {
   getFavorites,
   removeFavorite,
 } from "../controllers/favoritesController.ts";
-import {
-  getPopularRecipes,
-  getRecipes,
-} from "../controllers/recipesController.ts";
+import * as recipesController from "../controllers/recipesController.ts";
 import { authenticate } from "../middlewares/authenticate.ts";
+import { imageUpload } from "../middlewares/imageUpload.ts";
 import { optionalAuthenticate } from "../middlewares/optionalAuthenticate.ts";
+import { removeTempUpload } from "../middlewares/removeTempUpload.ts";
+import { requireMultipart } from "../middlewares/requireMultipart.ts";
+import { requireRecipeOwner } from "../middlewares/requireRecipeOwner.ts";
+import { validateImageContent } from "../middlewares/validateImageContent.ts";
+import { validateRecipeReferences } from "../middlewares/validateRecipeReferences.ts";
 import { validateRequest } from "../middlewares/validateRequest.ts";
 import {
   FavoriteRecipeParamsSchema,
   FavoritesQuerySchema,
 } from "../schemas/favoritesSchemas.ts";
 import {
+  CreateRecipeSchema,
   PopularRecipesQuerySchema,
+  RecipeIdParamsSchema,
   RecipesQuerySchema,
 } from "../schemas/recipesSchemas.ts";
 import { ctrlWrapper } from "../utils/ctrlWrapper.ts";
@@ -50,14 +55,34 @@ recipesRouter.get(
   "/popular",
   optionalAuthenticate,
   validateRequest({ query: PopularRecipesQuerySchema }),
-  ctrlWrapper(getPopularRecipes),
+  ctrlWrapper(recipesController.getPopularRecipes),
 );
 
 recipesRouter.get(
   "/",
   optionalAuthenticate,
   validateRequest({ query: RecipesQuerySchema }),
-  ctrlWrapper(getRecipes),
+  ctrlWrapper(recipesController.getRecipes),
+);
+
+recipesRouter.post(
+  "/",
+  authenticate,
+  requireMultipart,
+  imageUpload.single("thumb"),
+  removeTempUpload,
+  validateImageContent,
+  validateRequest({ body: CreateRecipeSchema }),
+  validateRecipeReferences,
+  ctrlWrapper(recipesController.createRecipe),
+);
+
+recipesRouter.delete(
+  "/:id",
+  authenticate,
+  validateRequest({ params: RecipeIdParamsSchema }),
+  requireRecipeOwner,
+  ctrlWrapper(recipesController.deleteRecipe),
 );
 
 export default recipesRouter;

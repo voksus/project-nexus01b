@@ -1,19 +1,20 @@
 import { Router } from "express";
+import areasRouter from "./areasRouter.ts";
 import authRouter from "./authRouter.ts";
+import categoriesRouter from "./categoriesRouter.ts";
+import ingredientsRouter from "./ingredientsRouter.ts";
 import recipesRouter from "./recipesRouter.ts";
 import testimonialsRouter from "./testimonialsRouter.ts";
+import usersRouter from "./usersRouter.ts";
 
 const apiRouter = Router();
 
-// Точки підключення модульних роутерів команди (відповідно до тікетів Trello):
-// [BE-04] apiRouter.use('/categories', categoriesRouter);
-// [BE-04] apiRouter.use('/areas', areasRouter);
-// [BE-04] apiRouter.use('/ingredients', ingredientsRouter);
-// [BE-10] apiRouter.use('/users', usersRouter);
 apiRouter.use("/auth", authRouter);
-
+apiRouter.use("/categories", categoriesRouter);
+apiRouter.use("/areas", areasRouter);
+apiRouter.use("/ingredients", ingredientsRouter);
+apiRouter.use("/users", usersRouter);
 apiRouter.use("/recipes", recipesRouter);
-
 apiRouter.use("/testimonials", testimonialsRouter);
 
 export default apiRouter;
