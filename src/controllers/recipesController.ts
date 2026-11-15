@@ -47,3 +47,11 @@ export async function getPopularRecipes(req: Request, res: Response) {
   const result = await recipesService.listPopularRecipes(limit, req.user?.id);
   res.status(200).json(result);
 }
+
+export async function getRecipeById(req: Request, res: Response) {
+  const result = await recipesService.getRecipeByIdService(
+    req.params.id,
+    req.user?.id,
+  );
+  res.status(200).json(result);
+}

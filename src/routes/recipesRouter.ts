@@ -6,6 +6,7 @@ import {
   getFavorites,
   removeFavorite,
 } from "../controllers/favoritesController.ts";
+import { getOwnRecipes } from "../controllers/ownRecipeController.ts";
 import * as recipesController from "../controllers/recipesController.ts";
 import { authenticate } from "../middlewares/authenticate.ts";
 import { imageUpload } from "../middlewares/imageUpload.ts";
@@ -22,6 +23,7 @@ import {
 } from "../schemas/favoritesSchemas.ts";
 import {
   CreateRecipeSchema,
+  OwnRecipesQuerySchema,
   PopularRecipesQuerySchema,
   RecipeIdParamsSchema,
   RecipesQuerySchema,
@@ -59,6 +61,13 @@ recipesRouter.get(
 );
 
 recipesRouter.get(
+  "/own",
+  authenticate,
+  validateRequest({ query: OwnRecipesQuerySchema }),
+  ctrlWrapper(getOwnRecipes),
+);
+
+recipesRouter.get(
   "/",
   optionalAuthenticate,
   validateRequest({ query: RecipesQuerySchema }),
@@ -83,6 +92,13 @@ recipesRouter.delete(
   validateRequest({ params: RecipeIdParamsSchema }),
   requireRecipeOwner,
   ctrlWrapper(recipesController.deleteRecipe),
+);
+
+recipesRouter.get(
+  "/:id",
+  optionalAuthenticate,
+  validateRequest({ params: RecipeIdParamsSchema }),
+  ctrlWrapper(recipesController.getRecipeById),
 );
 
 export default recipesRouter;

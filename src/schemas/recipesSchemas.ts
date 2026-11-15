@@ -108,6 +108,48 @@ export const PaginatedRecipesSchema = createPaginatedSchema(
   "PaginatedRecipes",
 );
 
+export const OwnRecipesQuerySchema = PaginationQuerySchema.extend({
+  limit: createPositiveIntegerQuerySchema(9, 100).openapi({
+    description: "Own recipes per page, from 1 to 100.",
+    example: 9,
+  }),
+  userId: IdSchema.optional().openapi({
+    description:
+      "Optional author ID. If omitted, returns recipes of the currently authenticated user.",
+    example: "6462a8f74c3d0ddd28897fb8",
+  }),
+});
+
+const RecipeIngredientItemSchema = z.object({
+  id: z.string().openapi({ example: "640c2dd963a319ea671e372c" }),
+  name: z.string().openapi({ example: "Tomatoes" }),
+  img: z.string().nullable(),
+  measure: z.string().nullable().openapi({ example: "2 large" }),
+});
+
+export const RecipeDetailsSchema = registry.register(
+  "RecipeDetails",
+  RecipeCardSchema.extend({
+    instructions: z.string().openapi({
+      example: "Heat olive oil in a large skillet over medium heat...",
+    }),
+    category: z.object({
+      id: z.string().openapi({ example: "6462a6cd4c3d0ddd28897f9b" }),
+      name: z.string().openapi({ example: "Vegetarian" }),
+    }),
+    area: z.object({
+      id: z.string().openapi({ example: "6462a6f04c3d0ddd28897f9d" }),
+      name: z.string().openapi({ example: "Tunisian" }),
+    }),
+    ingredients: z.array(RecipeIngredientItemSchema),
+  }),
+);
+
+export type RecipeIdParams = z.infer<typeof RecipeIdParamsSchema>;
+export type RecipeDetails = z.infer<typeof RecipeDetailsSchema>;
+
+export type OwnRecipesQuery = z.infer<typeof OwnRecipesQuerySchema>;
+
 export type CreateRecipeInput = z.infer<typeof CreateRecipeSchema>;
 export type RecipesQuery = z.infer<typeof RecipesQuerySchema>;
 export type PopularRecipesQuery = z.infer<typeof PopularRecipesQuerySchema>;
