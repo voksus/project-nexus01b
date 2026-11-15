@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { ErrorResponseSchema, registry } from "../openapi.ts";
 import {
   OwnRecipesQuerySchema,
@@ -9,6 +8,7 @@ import {
   RecipeIdParamsSchema,
   RecipesQuerySchema,
 } from "../schemas/recipesSchemas.ts";
+import { z } from "../utils/zod.ts";
 import { errorResponses } from "./errorResponses.ts";
 import { authenticatedSecurity, optionalSecurity } from "./security.ts";
 

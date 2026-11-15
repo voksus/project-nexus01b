@@ -4,10 +4,10 @@ import { prisma } from "../db.ts";
 import { createHttpError } from "../errors/HttpError.ts";
 import type { FavoritesQuery } from "../schemas/favoritesSchemas.ts";
 import type {
-  OwnRecipesQuery,
-  RecipeDetails,
   CreateRecipeInput,
+  OwnRecipesQuery,
   RecipeCard,
+  RecipeDetails,
   RecipesQuery,
 } from "../schemas/recipesSchemas.ts";
 import {

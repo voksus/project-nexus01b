@@ -120,17 +120,6 @@ export const OwnRecipesQuerySchema = PaginationQuerySchema.extend({
   }),
 });
 
-export const PaginatedOwnRecipesResponseSchema = registry.register(
-  "PaginatedOwnRecipesResponse",
-  z.object({
-    items: z.array(RecipeCardSchema),
-    total: z.number().int().nonnegative().openapi({ example: 18 }),
-    page: z.number().int().min(1).openapi({ example: 1 }),
-    limit: z.number().int().min(1).openapi({ example: 9 }),
-    totalPages: z.number().int().nonnegative().openapi({ example: 2 }),
-  }),
-);
-
 const RecipeIngredientItemSchema = z.object({
   id: z.string().openapi({ example: "640c2dd963a319ea671e372c" }),
   name: z.string().openapi({ example: "Tomatoes" }),
@@ -160,9 +149,6 @@ export type RecipeIdParams = z.infer<typeof RecipeIdParamsSchema>;
 export type RecipeDetails = z.infer<typeof RecipeDetailsSchema>;
 
 export type OwnRecipesQuery = z.infer<typeof OwnRecipesQuerySchema>;
-export type PaginatedOwnRecipesResponse = z.infer<
-  typeof PaginatedOwnRecipesResponseSchema
->;
 
 export type CreateRecipeInput = z.infer<typeof CreateRecipeSchema>;
 export type RecipesQuery = z.infer<typeof RecipesQuerySchema>;

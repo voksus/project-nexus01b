@@ -49,6 +49,9 @@ export async function getPopularRecipes(req: Request, res: Response) {
 }
 
 export async function getRecipeById(req: Request, res: Response) {
-  const result = await recipesService.getRecipeByIdService(req.params.id, req.user?.id);
+  const result = await recipesService.getRecipeByIdService(
+    req.params.id,
+    req.user?.id,
+  );
   res.status(200).json(result);
 }

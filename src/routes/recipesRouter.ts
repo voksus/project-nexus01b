@@ -22,8 +22,8 @@ import {
   FavoritesQuerySchema,
 } from "../schemas/favoritesSchemas.ts";
 import {
-  OwnRecipesQuerySchema,
   CreateRecipeSchema,
+  OwnRecipesQuerySchema,
   PopularRecipesQuerySchema,
   RecipeIdParamsSchema,
   RecipesQuerySchema,
