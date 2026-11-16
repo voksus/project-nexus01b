@@ -42,17 +42,15 @@ const authResponse = (description: string): ResponseConfig => ({
   content: { "application/json": { schema: AuthResponseSchema } },
 });
 
-const validationError = errorResponse(
-  "Помилка валідації тіла запиту (Validation error)",
-);
+const validationError = errorResponse("Request body validation failed");
 
 registry.registerPath({
   method: "post",
   path: "/api/auth/register",
   tags: [TAG],
-  summary: "Реєстрація нового користувача",
+  summary: "Register a new user",
   description:
-    "Створює користувача (email нормалізується: trim + lowercase, пароль хешується bcrypt) і одразу виконує логін: встановлює cookies `accessToken` і `refreshToken` та повертає дані користувача й access token.",
+    "Creates a user (email is trimmed and lowercased, password is hashed with bcrypt) and logs them in: sets the `accessToken` and `refreshToken` cookies and returns the user and the access token.",
   request: {
     body: {
       required: true,
@@ -60,9 +58,9 @@ registry.registerPath({
     },
   },
   responses: {
-    201: authResponse("Користувача створено, сесію відкрито"),
+    201: authResponse("User created and logged in"),
     400: validationError,
-    409: errorResponse("Email вже використовується (Email already in use)"),
+    409: errorResponse("Email already in use"),
   },
 });
 
@@ -70,9 +68,9 @@ registry.registerPath({
   method: "post",
   path: "/api/auth/login",
   tags: [TAG],
-  summary: "Вхід користувача",
+  summary: "Log in",
   description:
-    "Перевіряє email і пароль, створює нову сесію (refresh token зберігається в БД у вигляді SHA-256 хешу), встановлює cookies і повертає access token.",
+    "Checks email and password, starts a new session (the refresh token is stored in the DB as a SHA-256 hash), sets the cookies and returns the access token.",
   request: {
     body: {
       required: true,
@@ -80,11 +78,9 @@ registry.registerPath({
     },
   },
   responses: {
-    200: authResponse("Успішний вхід"),
+    200: authResponse("Logged in"),
     400: validationError,
-    401: errorResponse(
-      "Невірний email або пароль, або користувача не існує (Invalid credentials)",
-    ),
+    401: errorResponse("Wrong password or unknown email (Invalid credentials)"),
   },
 });
 
@@ -92,14 +88,14 @@ registry.registerPath({
   method: "post",
   path: "/api/auth/refresh",
   tags: [TAG],
-  summary: "Оновлення пари токенів (ротація refresh token)",
+  summary: "Refresh the token pair (refresh token rotation)",
   description:
-    "Читає `refreshToken` з cookie, перевіряє підпис JWT, наявність сесії в БД і термін дії. Старий refresh token стає недійсним, видається нова пара токенів і оновлюються cookies.",
+    "Reads `refreshToken` from the cookie and checks the JWT signature, the session in the DB and its expiry. The old refresh token is invalidated, a new token pair is issued and the cookies are updated.",
   security: [{ [refreshTokenCookie.name]: [] }],
   responses: {
-    200: authResponse("Токени оновлено"),
+    200: authResponse("Tokens refreshed"),
     401: errorResponse(
-      "Refresh token відсутній, невалідний, протермінований або вже використаний",
+      "Refresh token is missing, invalid, expired or already used",
     ),
   },
 });
@@ -108,15 +104,15 @@ registry.registerPath({
   method: "post",
   path: "/api/auth/logout",
   tags: [TAG],
-  summary: "Вихід користувача",
+  summary: "Log out",
   description:
-    "Видаляє поточну сесію (за cookie `refreshToken`, якщо вона є) та очищує обидві cookies. Завжди повертає 204 — навіть без токена або з протермінованим токеном.",
+    "Deletes the current session (by the `refreshToken` cookie, if present) and clears both cookies. Always returns 204, even without a token or with an expired one.",
   security: [{ [refreshTokenCookie.name]: [] }, {}],
   responses: {
     204: {
-      description: "Сесію завершено, cookies очищено",
+      description: "Logged out, cookies cleared",
       headers: setCookieHeaders(
-        "Очищення cookies `accessToken` і `refreshToken`",
+        "Clears the `accessToken` and `refreshToken` cookies",
       ),
     },
   },
