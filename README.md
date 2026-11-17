@@ -80,6 +80,8 @@ DIRECT_URL="postgresql://<user>:<password>@<direct-host>/<database>?sslmode=requ
 - The project uses `prisma.config.ts`, with `datasource.url` set to `process.env.DIRECT_URL ?? process.env.DATABASE_URL` and `migrations.seed` set to `"tsx prisma/seed.ts"`.
 - The existing seed reads `DIRECT_URL` (or falls back to `DATABASE_URL`).
 
+`TRUST_PROXY` is the number of proxies in front of the app (default `1`). Rate limits count requests per client IP, and Express takes that IP from `X-Forwarded-For` behind this many proxies. If it is too low, every client gets the proxy's IP and they all share one limit; if it is too high, clients can fake their IP.
+
 **Do not post connection strings in public channels or include them in Git commits.** Share credentials with the backend maintainers privately through your team's approved secure channel.
 
 ## Setup in the backend repository

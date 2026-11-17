@@ -44,6 +44,26 @@ const authResponse = (description: string): ResponseConfig => ({
 
 const validationError = errorResponse("Request body validation failed");
 
+const tooManyRequests = (limit: string): ResponseConfig => ({
+  description: `Too many requests from one IP: ${limit}. Retry after the number of seconds in \`Retry-After\`.`,
+  headers: {
+    RateLimit: {
+      description: 'Current limit state, e.g. `"15-in-15min"; r=0; t=900`',
+      schema: { type: "string" },
+    },
+    "Retry-After": {
+      description: "Seconds until the limit resets",
+      schema: { type: "integer" },
+    },
+  },
+  content: { "application/json": { schema: ErrorResponseSchema } },
+});
+
+// Login and register share one counter
+const authTooManyRequests = tooManyRequests(
+  "15 login/register attempts per 15 minutes",
+);
+
 registry.registerPath({
   method: "post",
   path: "/api/auth/register",
@@ -61,6 +81,7 @@ registry.registerPath({
     201: authResponse("User created and logged in"),
     400: validationError,
     409: errorResponse("Email already in use"),
+    429: authTooManyRequests,
   },
 });
 
@@ -81,6 +102,7 @@ registry.registerPath({
     200: authResponse("Logged in"),
     400: validationError,
     401: errorResponse("Wrong password or unknown email (Invalid credentials)"),
+    429: authTooManyRequests,
   },
 });
 
@@ -97,6 +119,7 @@ registry.registerPath({
     401: errorResponse(
       "Refresh token is missing, invalid, expired or already used",
     ),
+    429: tooManyRequests("60 refresh requests per 15 minutes"),
   },
 });
 
