@@ -21,6 +21,7 @@ const defaultMessages: Record<number, string> = {
   403: "Forbidden",
   404: "Not Found",
   409: "Conflict",
+  429: "Too many requests, please try again later.",
   500: "Internal Server Error",
 };
 
