@@ -95,7 +95,7 @@ export const generateOpenApiDocument = () => {
       title: "Foodies REST API",
       version: "1.0.0",
       description:
-        "Automatically generated Foodies API documentation (Zod + @asteasolutions/zod-to-openapi).",
+        "Automatically generated Foodies API documentation (Zod + @asteasolutions/zod-to-openapi).\n\nRate limits per client IP: 200 requests per minute for `/api` (except `/api/health`), 15 login/register attempts per 15 minutes, 60 refresh requests per 15 minutes. Over the limit the API returns `429` with `{ message }` and the `RateLimit` and `Retry-After` headers.",
     },
     servers: [{ url: "/", description: "Current Server" }],
   });

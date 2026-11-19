@@ -6,6 +6,8 @@ const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
+  // Number of proxies in front of the app; rate limits key on the client IP behind them
+  TRUST_PROXY: z.coerce.number().int().min(0).default(1),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   DIRECT_URL: z.string().optional(),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters"),
