@@ -48,7 +48,19 @@ const changeAvatar = async (req: Request, res: Response) => {
   res.json(result);
 };
 
-// 4. GET /api/users/following
+// 4. PATCH /api/users/profile
+const updateName = async (req: Request, res: Response) => {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new HttpError(401, "Unauthorized");
+  }
+
+  const { name } = req.body as { name: string };
+  const user = await userService.updateUserNameService(userId, name);
+  res.json(user);
+};
+
+// 5. GET /api/users/following
 const fetchFollowing = async (req: Request, res: Response) => {
   const userId = req.user?.sub;
   if (!userId) {
@@ -111,6 +123,7 @@ const unfollow = async (req: Request, res: Response) => {
 export const getCurrentUser = ctrlWrapper(getCurrent);
 export const getUserById = ctrlWrapper(getById);
 export const updateAvatar = ctrlWrapper(changeAvatar);
+export const updateProfile = ctrlWrapper(updateName);
 
 export const getFollowing = ctrlWrapper(fetchFollowing);
 export const getFollowers = ctrlWrapper(fetchFollowers);

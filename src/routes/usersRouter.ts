@@ -6,6 +6,7 @@ import { imageUpload } from "../middlewares/imageUpload.ts";
 import { removeTempUpload } from "../middlewares/removeTempUpload.ts";
 import { validateRequest } from "../middlewares/validateRequest.ts";
 import {
+  UpdateProfileSchema,
   UserIdParamsSchema,
   UsersPaginationQuerySchema,
 } from "../schemas/usersSchemas.ts";
@@ -25,6 +26,11 @@ usersRouter.patch(
   imageUpload.single("avatar"),
   removeTempUpload,
   userCtrl.updateAvatar,
+);
+usersRouter.patch(
+  "/profile",
+  validateRequest({ body: UpdateProfileSchema }),
+  userCtrl.updateProfile,
 );
 usersRouter.get(
   "/:id",
