@@ -978,3 +978,136 @@ test("private favorite endpoints", async (t) => {
     await prisma.user.deleteMany({ where: { id: userId } });
   }
 });
+
+const patchRecipe = async (
+  id: string,
+  fields: Record<string, string>,
+  userId?: string,
+  file?: Blob,
+) => {
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) form.append(key, value);
+  if (file) form.append("thumb", file, "dish.png");
+  const response = await fetch(`${baseUrl}/api/recipes/${id}`, {
+    method: "PATCH",
+    headers: userId ? bearer(userId) : undefined,
+    body: form,
+    signal: AbortSignal.timeout(20000),
+  });
+  const text = await response.text();
+  return {
+    status: response.status,
+    body: text ? (JSON.parse(text) as Record<string, unknown>) : null,
+  };
+};
+
+const png = new Blob(
+  [
+    Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  ],
+  { type: "image/png" },
+);
+
+test("owner can partially update a recipe, replace its photo, and reject invalid updates", async () => {
+  const editableId = randomUUID();
+  await prisma.recipe.create({
+    data: {
+      id: editableId,
+      title: "Editable salad",
+      description: "A salad",
+      instructions: "Mix the ingredients.",
+      time: 20,
+      thumb: null,
+      ownerId: ids.owner,
+      categoryId: ids.seafood,
+      areaId: ids.italian,
+      ingredients: {
+        create: [{ ingredientId: ids.tomato, measure: "1" }],
+      },
+    },
+  });
+
+  try {
+    const renamed = await patchRecipe(
+      editableId,
+      { title: "Renamed salad" },
+      ids.owner,
+    );
+    assert.equal(renamed.status, 200);
+    assert.ok(renamed.body);
+    assert.equal(renamed.body.title, "Renamed salad");
+    assert.equal((renamed.body.owner as { id: string }).id, ids.owner);
+    assert.equal(
+      (renamed.body.ingredients as { id: string }[])[0]?.id,
+      ids.tomato,
+    );
+
+    const cloudinary = (await import("cloudinary")).v2;
+    const originalUpload = cloudinary.uploader.upload.bind(cloudinary.uploader);
+    const originalDestroy = cloudinary.uploader.destroy.bind(
+      cloudinary.uploader,
+    );
+    cloudinary.uploader.upload = (() =>
+      Promise.resolve({
+        secure_url: "https://example.test/replaced.jpg",
+      })) as typeof cloudinary.uploader.upload;
+    cloudinary.uploader.destroy = (() =>
+      Promise.resolve({ result: "ok" })) as typeof cloudinary.uploader.destroy;
+    let replaced: Awaited<ReturnType<typeof patchRecipe>>;
+    try {
+      replaced = await patchRecipe(editableId, {}, ids.owner, png);
+    } finally {
+      cloudinary.uploader.upload = originalUpload;
+      cloudinary.uploader.destroy = originalDestroy;
+    }
+    assert.equal(replaced.status, 200);
+    assert.equal(replaced.body?.thumb, "https://example.test/replaced.jpg");
+
+    const empty = await patchRecipe(editableId, {}, ids.owner);
+    assert.equal(empty.status, 400);
+    assert.equal(
+      empty.body?.message,
+      "At least one field or image must be provided",
+    );
+
+    const foreign = await patchRecipe(
+      editableId,
+      { title: "Stolen salad" },
+      ids.bob,
+    );
+    assert.equal(foreign.status, 403);
+
+    const missing = await patchRecipe(
+      randomUUID(),
+      { title: "Ghost" },
+      ids.owner,
+    );
+    assert.equal(missing.status, 404);
+
+    const unknownCategory = await patchRecipe(
+      editableId,
+      { categoryId: randomUUID() },
+      ids.owner,
+    );
+    assert.equal(unknownCategory.status, 400);
+
+    const anonymous = await patchRecipe(editableId, { title: "Nope" });
+    assert.equal(anonymous.status, 401);
+
+    const { generateOpenApiDocument } = await import("../src/openapi.ts");
+    const doc = generateOpenApiDocument();
+    const update = doc.paths["/api/recipes/{id}"]?.patch;
+    assert(update);
+    assert.equal(update.responses?.["200"] !== undefined, true);
+    assert.equal(update.responses?.["415"] !== undefined, true);
+    assert(doc.components?.schemas?.UpdateRecipeMultipart);
+  } finally {
+    await fetch(`${baseUrl}/api/recipes/${editableId}`, {
+      method: "DELETE",
+      headers: bearer(ids.owner),
+    });
+  }
+});

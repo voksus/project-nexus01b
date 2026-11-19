@@ -15,7 +15,10 @@ import { removeTempUpload } from "../middlewares/removeTempUpload.ts";
 import { requireMultipart } from "../middlewares/requireMultipart.ts";
 import { requireRecipeOwner } from "../middlewares/requireRecipeOwner.ts";
 import { validateImageContent } from "../middlewares/validateImageContent.ts";
-import { validateRecipeReferences } from "../middlewares/validateRecipeReferences.ts";
+import {
+  validatePartialRecipeReferences,
+  validateRecipeReferences,
+} from "../middlewares/validateRecipeReferences.ts";
 import { validateRequest } from "../middlewares/validateRequest.ts";
 import {
   FavoriteRecipeParamsSchema,
@@ -27,6 +30,7 @@ import {
   PopularRecipesQuerySchema,
   RecipeIdParamsSchema,
   RecipesQuerySchema,
+  UpdateRecipeSchema,
 } from "../schemas/recipesSchemas.ts";
 import { ctrlWrapper } from "../utils/ctrlWrapper.ts";
 
@@ -84,6 +88,20 @@ recipesRouter.post(
   validateRequest({ body: CreateRecipeSchema }),
   validateRecipeReferences,
   ctrlWrapper(recipesController.createRecipe),
+);
+
+recipesRouter.patch(
+  "/:id",
+  authenticate,
+  validateRequest({ params: RecipeIdParamsSchema }),
+  requireRecipeOwner,
+  requireMultipart,
+  imageUpload.single("thumb"),
+  removeTempUpload,
+  validateImageContent,
+  validateRequest({ body: UpdateRecipeSchema }),
+  validatePartialRecipeReferences,
+  ctrlWrapper(recipesController.updateRecipe),
 );
 
 recipesRouter.delete(
