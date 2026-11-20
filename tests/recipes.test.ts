@@ -1053,7 +1053,7 @@ test("owner can partially update a recipe, replace its photo, and reject invalid
     cloudinary.uploader.upload = (() =>
       Promise.resolve({
         secure_url: "https://example.test/replaced.jpg",
-      })) as typeof cloudinary.uploader.upload;
+      })) as unknown as typeof cloudinary.uploader.upload;
     cloudinary.uploader.destroy = (() =>
       Promise.resolve({ result: "ok" })) as typeof cloudinary.uploader.destroy;
     let replaced: Awaited<ReturnType<typeof patchRecipe>>;
