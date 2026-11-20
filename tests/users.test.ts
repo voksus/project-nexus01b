@@ -247,6 +247,7 @@ test("Swagger registers all user endpoints and schemas", async () => {
   assert(doc.paths["/api/users/current"]?.get);
   assert(doc.paths["/api/users/following"]?.get);
   assert(doc.paths["/api/users/avatars"]?.patch);
+  assert(doc.paths["/api/users/profile"]?.patch);
   assert(doc.paths["/api/users/{id}"]?.get);
   assert(doc.paths["/api/users/{id}/followers"]?.get);
   assert(doc.paths["/api/users/{id}/follow"]?.post);
@@ -256,4 +257,28 @@ test("Swagger registers all user endpoints and schemas", async () => {
   assert(doc.components?.schemas?.UserByIdResponse);
   assert(doc.components?.schemas?.PaginatedUserCards);
   assert(doc.components?.schemas?.AvatarResponse);
+  assert(doc.components?.schemas?.UpdateProfile);
+  assert(doc.components?.schemas?.UpdatedUser);
+});
+
+test("profile name is trimmed and rejected outside 2-32 characters", async () => {
+  const { UpdateProfileSchema } = await import(
+    "../src/schemas/usersSchemas.ts"
+  );
+  assert.equal(UpdateProfileSchema.parse({ name: "  Ada  " }).name, "Ada");
+  assert.throws(() => UpdateProfileSchema.parse({ name: "A" }));
+  assert.throws(() => UpdateProfileSchema.parse({ name: "A".repeat(33) }));
+
+  const updated = await userService.updateUserNameService(ids.alice, "Ada");
+  assert.equal(updated.name, "Ada");
+  assert.equal(updated.id, ids.alice);
+  assert.equal(updated.email, "alice@example.test");
+
+  const unauthenticated = await fetch(`${baseUrl}/api/users/profile`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Ada" }),
+    signal: AbortSignal.timeout(10000),
+  });
+  assert.equal(unauthenticated.status, 401);
 });

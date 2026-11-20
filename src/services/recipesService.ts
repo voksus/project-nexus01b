@@ -9,6 +9,7 @@ import type {
   RecipeCard,
   RecipeDetails,
   RecipesQuery,
+  UpdateRecipeInput,
 } from "../schemas/recipesSchemas.ts";
 import {
   formatPaginatedResponse,
@@ -81,6 +82,55 @@ export const findReferenceErrors = async (
   return errors;
 };
 
+export const findPartialReferenceErrors = async (
+  input: UpdateRecipeInput,
+): Promise<ReferenceIssue[]> => {
+  const [category, area, ingredients] = await Promise.all([
+    input.categoryId
+      ? prisma.category.findUnique({
+          where: { id: input.categoryId },
+          select: { id: true },
+        })
+      : Promise.resolve(undefined),
+    input.areaId
+      ? prisma.area.findUnique({
+          where: { id: input.areaId },
+          select: { id: true },
+        })
+      : Promise.resolve(undefined),
+    input.ingredients
+      ? prisma.ingredient.findMany({
+          where: { id: { in: input.ingredients.map((item) => item.id) } },
+          select: { id: true },
+        })
+      : Promise.resolve(undefined),
+  ]);
+
+  const errors: ReferenceIssue[] = [];
+
+  if (input.categoryId && !category) {
+    errors.push({ path: "categoryId", message: "Unknown category" });
+  }
+  if (input.areaId && !area) {
+    errors.push({ path: "areaId", message: "Unknown area" });
+  }
+  if (input.ingredients && ingredients) {
+    const knownIngredientIds = new Set(
+      ingredients.map((ingredient) => ingredient.id),
+    );
+    input.ingredients.forEach((item, index) => {
+      if (!knownIngredientIds.has(item.id)) {
+        errors.push({
+          path: `ingredients[${index}].id`,
+          message: "Unknown ingredient",
+        });
+      }
+    });
+  }
+
+  return errors;
+};
+
 export const createRecipe = async (
   ownerId: string,
   input: CreateRecipeInput,
@@ -116,6 +166,69 @@ export const createRecipe = async (
     await destroyImage(recipeImagePublicId(recipeId));
     throw error;
   }
+};
+
+export const updateRecipe = async (
+  recipeId: string,
+  ownerId: string,
+  input: UpdateRecipeInput,
+  imagePath?: string,
+): Promise<RecipeDetails> => {
+  const publicId = recipeImagePublicId(recipeId);
+  let thumb: string | undefined;
+  let createdNewPublicId = false;
+
+  if (imagePath) {
+    const current = await prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: { thumb: true },
+    });
+    createdNewPublicId = !current?.thumb?.includes(`/${publicId}`);
+    thumb = await uploadImage(imagePath, publicId, { overwrite: true });
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.recipe.update({
+        where: { id: recipeId },
+        data: {
+          ...(input.title !== undefined ? { title: input.title } : {}),
+          ...(input.description !== undefined
+            ? { description: input.description }
+            : {}),
+          ...(input.instructions !== undefined
+            ? { instructions: input.instructions }
+            : {}),
+          ...(input.time !== undefined ? { time: input.time } : {}),
+          ...(thumb !== undefined ? { thumb } : {}),
+          ...(input.categoryId !== undefined
+            ? { category: { connect: { id: input.categoryId } } }
+            : {}),
+          ...(input.areaId !== undefined
+            ? { area: { connect: { id: input.areaId } } }
+            : {}),
+        },
+      });
+
+      if (input.ingredients) {
+        await tx.recipeIngredient.deleteMany({ where: { recipeId } });
+        await tx.recipeIngredient.createMany({
+          data: input.ingredients.map(({ id, measure }) => ({
+            recipeId,
+            ingredientId: id,
+            measure,
+          })),
+        });
+      }
+    });
+  } catch (error) {
+    if (imagePath && createdNewPublicId) {
+      await destroyImage(publicId);
+    }
+    throw error;
+  }
+
+  return getRecipeByIdService(recipeId, ownerId);
 };
 
 const toRecipeResponse = (recipe: RecipeWithDetails) => ({

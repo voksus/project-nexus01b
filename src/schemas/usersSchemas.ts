@@ -72,6 +72,30 @@ export const UserByIdResponseSchema = registry.register(
   }),
 );
 
+export const UpdateProfileSchema = registry.register(
+  "UpdateProfile",
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(2)
+      .max(32)
+      .openapi({ example: "Olena Kovalenko" }),
+  }),
+);
+
+export const UpdatedUserSchema = registry.register(
+  "UpdatedUser",
+  z.object({
+    id: z.string().openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
+    name: z.string().openapi({ example: "Olena Kovalenko" }),
+    email: z.email().openapi({ example: "olena@example.com" }),
+    avatar: z.string().nullable().openapi({
+      example: "https://res.cloudinary.com/demo/image/upload/avatar.jpg",
+    }),
+  }),
+);
+
 export const AvatarResponseSchema = registry.register(
   "AvatarResponse",
   z.object({

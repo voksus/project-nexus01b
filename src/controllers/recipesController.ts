@@ -4,6 +4,7 @@ import type {
   CreateRecipeInput,
   PopularRecipesQuery,
   RecipesQuery,
+  UpdateRecipeInput,
 } from "../schemas/recipesSchemas.ts";
 import * as recipesService from "../services/recipesService.ts";
 
@@ -25,6 +26,30 @@ export const createRecipe = async (
   );
 
   res.status(201).json(recipe);
+};
+
+export const updateRecipe = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  if (!req.user) {
+    throw createHttpError(401, "Authentication required");
+  }
+
+  const input = req.body as UpdateRecipeInput;
+  const hasField = Object.values(input).some((value) => value !== undefined);
+  if (!hasField && !req.file) {
+    throw createHttpError(400, "At least one field or image must be provided");
+  }
+
+  const recipe = await recipesService.updateRecipe(
+    req.params.id,
+    req.user.id,
+    input,
+    req.file?.path,
+  );
+
+  res.status(200).json(recipe);
 };
 
 export const deleteRecipe = async (

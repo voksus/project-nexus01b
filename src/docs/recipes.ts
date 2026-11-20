@@ -174,6 +174,63 @@ registry.registerPath({
   },
 });
 
+const UpdateRecipeMultipartSchema = registry.register(
+  "UpdateRecipeMultipart",
+  CreateRecipeMultipartSchema.partial().extend({
+    thumb: z.string().optional().openapi({
+      format: "binary",
+      description: "Optional replacement JPEG, PNG or WebP, max 5 MB",
+    }),
+  }),
+);
+
+registry.registerPath({
+  method: "patch",
+  path: "/api/recipes/{id}",
+  tags: ["Recipes"],
+  summary: "Partially update an own recipe",
+  description:
+    "Updates only the provided fields. A new photo replaces the previous one. At least one field or a new image is required. Unknown category, area, or ingredient IDs are rejected.",
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: RecipeIdParamsSchema,
+    body: {
+      required: true,
+      content: {
+        "multipart/form-data": { schema: UpdateRecipeMultipartSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "The updated recipe.",
+      content: { "application/json": { schema: RecipeDetailsSchema } },
+    },
+    400: {
+      description:
+        "Validation error, empty update, or unknown category, area, or ingredient ID",
+      content: { "application/json": { schema: ErrorResponseSchema } },
+    },
+    401: {
+      description: "Not authenticated",
+      content: { "application/json": { schema: ErrorResponseSchema } },
+    },
+    403: {
+      description: "Recipe belongs to another user",
+      content: { "application/json": { schema: ErrorResponseSchema } },
+    },
+    404: {
+      description: "Recipe not found",
+      content: { "application/json": { schema: ErrorResponseSchema } },
+    },
+    415: {
+      description:
+        "Content-Type is not multipart or the image type is not allowed",
+      content: { "application/json": { schema: ErrorResponseSchema } },
+    },
+  },
+});
+
 registry.registerPath({
   method: "delete",
   path: "/api/recipes/{id}",

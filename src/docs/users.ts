@@ -3,6 +3,8 @@ import {
   AvatarResponseSchema,
   CurrentUserResponseSchema,
   PaginatedUserCardsSchema,
+  UpdatedUserSchema,
+  UpdateProfileSchema,
   UserByIdResponseSchema,
   UserIdParamsSchema,
   UsersPaginationQuerySchema,
@@ -73,6 +75,30 @@ registry.registerPath({
     200: {
       description: "Avatar updated successfully.",
       content: { "application/json": { schema: AvatarResponseSchema } },
+    },
+    ...errorResponses,
+  },
+});
+
+registry.registerPath({
+  method: "patch",
+  path: "/api/users/profile",
+  tags: ["Users"],
+  summary: "Update current user name",
+  description:
+    "Updates the name of the currently authenticated user. Email, avatar and password stay unchanged.",
+  security: authenticatedSecurity,
+  request: {
+    body: {
+      content: {
+        "application/json": { schema: UpdateProfileSchema },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Updated user identity.",
+      content: { "application/json": { schema: UpdatedUserSchema } },
     },
     ...errorResponses,
   },

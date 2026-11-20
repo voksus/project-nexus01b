@@ -46,6 +46,8 @@ export const CreateRecipeSchema = z.object({
   ingredients: ingredientsFieldSchema,
 });
 
+export const UpdateRecipeSchema = CreateRecipeSchema.partial();
+
 export const RecipeIdParamsSchema = z.object({
   id: z.string().min(1).max(36),
 });
@@ -151,6 +153,7 @@ export type RecipeDetails = z.infer<typeof RecipeDetailsSchema>;
 export type OwnRecipesQuery = z.infer<typeof OwnRecipesQuerySchema>;
 
 export type CreateRecipeInput = z.infer<typeof CreateRecipeSchema>;
+export type UpdateRecipeInput = z.infer<typeof UpdateRecipeSchema>;
 export type RecipesQuery = z.infer<typeof RecipesQuerySchema>;
 export type PopularRecipesQuery = z.infer<typeof PopularRecipesQuerySchema>;
 export type RecipeCard = z.infer<typeof RecipeCardSchema>;

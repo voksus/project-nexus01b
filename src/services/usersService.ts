@@ -97,6 +97,26 @@ export const getUserByIdService = async (
   };
 };
 
+export const updateUserNameService = async (userId: string, name: string) => {
+  try {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: { name },
+      select: { id: true, name: true, email: true, avatar: true },
+    });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2025"
+    ) {
+      throw new HttpError(404, "User not found");
+    }
+    throw error;
+  }
+};
+
 export const updateUserAvatarService = async (
   userId: string,
   filePath: string,
